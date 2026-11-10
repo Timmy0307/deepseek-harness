@@ -412,6 +412,30 @@ describe('FileSystemSkillProvider', () => {
     expect((await ctx.skills.get('block-skill'))?.content).toBe('Block body.')
   })
 
+  it('keeps multi-key CRLF frontmatter intact', async () => {
+    const home = await tempDir('skill-frontmatter-crlf-multikey')
+    const root = join(home, '.dsh/skills')
+    await mkdir(root, { recursive: true })
+    await writeFile(join(root, 'crlf-keys.md'), [
+      '---',
+      'name: crlf-keys',
+      'description: Multi-key CRLF frontmatter',
+      'whenToUse: When the skill file was checked out on Windows',
+      'license: MIT',
+      'platforms: [linux, macos, windows]',
+      '---',
+      '',
+      'Body.',
+    ].join('\r\n'))
+
+    const ctx = await setupLocal(home)
+
+    const skill = await ctx.skills.get('crlf-keys')
+    expect(skill?.description).toBe('Multi-key CRLF frontmatter')
+    expect(skill?.whenToUse).toBe('When the skill file was checked out on Windows')
+    expect(skill?.content).toBe('Body.')
+  })
+
   it('skips invalid YAML skill files without hiding valid siblings', async () => {
     const home = await tempDir('skill-invalid-yaml')
     const root = join(home, '.dsh/skills')
